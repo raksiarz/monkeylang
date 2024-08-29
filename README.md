@@ -15,7 +15,7 @@ To run the REPL first in command line run `npm run build` and after that run `np
 ## Binding values to name
 `let age = 1;`\
 `let name = "Monkey";`\
-`let result = 10 * (10 / 2);`\
+`let result = 10 * (10 / 2);`
 
 Let statement can be also used to bind functions
 
