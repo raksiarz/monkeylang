@@ -13,9 +13,9 @@ To run the REPL first in command line run `npm run build` and after that run `np
 ### Language overview
 
 ## Binding values to name
-`let age = 1;`
-`let name = "Monkey";`
-`let result = 10 * (10 / 2);`
+`let age = 1;`\
+`let name = "Monkey";`\
+`let result = 10 * (10 / 2);`\
 
 Let statement can be also used to bind functions
 
@@ -28,7 +28,7 @@ Let statement can be also used to bind functions
 `let obj = { "name": "Ben", "age": 32 };`
 
 ## Accessing elements
-`arr[0] // => 1`
+`arr[0] // => 1`\
 `obj["name"] // => "Ben"`
 
 ## Function calls
