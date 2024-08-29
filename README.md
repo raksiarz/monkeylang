@@ -10,9 +10,11 @@ Monkey lang is simple langue implemented in TS following "Writing an interpreter
 ### Getting started
 To run the REPL first in command line run `npm run build` and after that run `npm run start`
 
+#### Still work in progress, for now generating tokens and building ast works fine, evaluator not so much 
+
 ### Language overview
 
-## Binding values to name
+#### Binding values to name
 `let age = 1;`\
 `let name = "Monkey";`\
 `let result = 10 * (10 / 2);`
@@ -21,13 +23,13 @@ Let statement can be also used to bind functions
 
 `let add = fn(a, b) { return a + b };`
 
-## Arrays
+#### Arrays
 `let arr = [1, 2, 3, 4];`
 
-## Hash
+#### Hash
 `let obj = { "name": "Ben", "age": 32 };`
 
-## Accessing elements
+#### Accessing elements
 `arr[0] // => 1`\
 `obj["name"] // => "Ben"`
 
