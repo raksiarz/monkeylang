@@ -1,6 +1,6 @@
 import { Token } from "./tokenizer"
 
-interface Node {
+export interface Node {
   tokenLiteral(): string
   string(): string
 }
@@ -13,40 +13,76 @@ export interface Expression extends Node {
   expressionNode(): any 
 }
 
-interface Program {
+interface Program extends Node {
   statements: Statement[]
 }
 
-interface LetStmt {
+export interface LetStmt extends Statement {
   token: Token 
   name: Identifier
-  value: Expression
+  value: Expression | null
 }
 
-interface ReturnStmt {
+interface ReturnStmt extends Statement {
   token: Token
-  returnValue: Expression
+  returnValue: Expression | null
 }
 
-interface ExpressionStmt {
+interface ExpressionStmt extends Statement {
   token: Token
   expression: Expression | null
 }
 
-interface Identifier {
+export interface Identifier extends Expression {
   token: Token
   value: string
 }
 
-interface IntegerLiteral {
+export interface IntegerLiteral extends Expression {
   token: Token
   value: number
 }
 
-interface PrefixExpression {
+interface PrefixExpression extends Expression {
   token: Token
   operator: string
   right: Expression | null
+}
+
+interface InfixExpression extends Expression {
+  token: Token
+  left: Expression | null
+  operator: string
+  right: Expression | null
+}
+
+interface Boolean extends Expression {
+  token: Token
+  value: boolean
+}
+
+interface IfExpression extends Expression {
+  token: Token
+  condition: Expression | null
+  consequence: BlockStatement
+  alternative: BlockStatement
+}
+
+export interface BlockStatement extends Statement {
+  token: Token
+  statements: Statement[]
+}
+
+interface FunctionLiteral extends Expression{
+  token: Token
+  parameters: Identifier[]
+  body: BlockStatement
+}
+
+interface CallExpression extends Expression {
+  token: Token
+  fn: Expression | null
+  arguments: Expression[]
 }
 
 export class ProgramImpl implements Program {
@@ -78,7 +114,7 @@ export class ProgramImpl implements Program {
 export class LetStmtImpl implements LetStmt {
   token: Token 
   name: Identifier
-  value: Expression
+  value: Expression | null
 
   constructor(token: Token) {
     this.token = token
@@ -105,7 +141,7 @@ export class LetStmtImpl implements LetStmt {
 
 export class ReturnStmtImpl implements ReturnStmt {
   token: Token 
-  returnValue: Expression
+  returnValue: Expression | null
 
   constructor(token: Token) {
     this.token = token
@@ -218,3 +254,161 @@ export class PrefixExpressionImpl implements PrefixExpression {
     return out
   }
 }
+
+export class InfixExpressionImpl implements InfixExpression {
+  token: Token
+  left: Expression | null
+  operator: string
+  right: Expression | null
+
+  constructor(token: Token, operator: string, left: Expression | null) {
+    this.token = token
+    this.operator = operator
+    this.left = left
+  }
+
+  expressionNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    return `(${this.left?.string()} ${this.operator} ${this.right?.string()})`
+  }
+}
+
+export class BooleanImpl implements Boolean {
+  token: Token
+  value: boolean
+
+  constructor(token: Token, value: boolean) {
+    this.token = token
+    this.value = value
+  }
+
+  expressionNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    return this.token.literal
+  }
+}
+
+export class IfExpressionImpl implements IfExpression {
+  token: Token
+  condition: Expression | null
+  consequence: BlockStatement
+  alternative: BlockStatement
+
+  constructor(token: Token) {
+    this.token = token
+  }
+
+  expressionNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    let out = `if ${String(this.condition)} ${String(this.consequence)}`
+
+    if(this.alternative) {
+      out += `else ${String(this.alternative)}`
+    }
+
+    return out
+  }
+}
+
+export class BlockStatementImpl implements BlockStatement {
+  token: Token
+  statements: Statement[]
+
+  constructor(token: Token) {
+    this.token = token
+  }
+
+  statementNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    let out: string = ''
+
+    for(let i = 0; i < this.statements.length; i++) {
+      out += String(this.statements[i])
+    }
+
+    return out
+  }
+}
+
+export class FunctionLiteralImpl implements FunctionLiteral {
+  token: Token
+  parameters: Identifier[]
+  body: BlockStatement
+
+  constructor(token: Token) {
+    this.token = token
+  }
+
+  expressionNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    let out: string = ''
+
+    const params: string[] = []
+
+    for(let i = 0; i < this.parameters.length; i++) {
+      params.push(String(this.parameters[i]))
+    }
+
+    out += `${this.tokenLiteral()}(${params.join(', ')}) ${String(this.body)}`
+
+    return out
+  }
+}
+
+export class CallExpressionImpl implements CallExpression {
+  token: Token
+  fn: Expression | null
+  arguments: Expression[]
+
+  constructor(token: Token, fn: Expression | null) {
+    this.token = token
+    this.fn = fn 
+  }
+
+  expressionNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    let out: string = ''
+
+    const args: string[] = []
+
+    for(let i = 0; i < this.arguments.length; i++) {
+      args.push(String(this.arguments[i]))
+    }
+
+    out += `${String(this.fn)}(${this.arguments.join(', ')})`
+
+    return out
+  }
+}
+
+

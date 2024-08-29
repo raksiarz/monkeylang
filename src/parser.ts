@@ -1,5 +1,23 @@
 import LexerImpl, { Token, TokenType } from "./tokenizer"
-import { IdentifierImpl, LetStmtImpl, ProgramImpl, ReturnStmtImpl, Statement, Expression, ExpressionStmtImpl, IntegerLiteralImpl, PrefixExpressionImpl } from "./ast"
+import { 
+  IdentifierImpl, 
+  LetStmtImpl, 
+  ProgramImpl, 
+  ReturnStmtImpl, 
+  Statement, 
+  Expression, 
+  BlockStatement, 
+  ExpressionStmtImpl, 
+  IntegerLiteralImpl, 
+  PrefixExpressionImpl, 
+  InfixExpressionImpl, 
+  BooleanImpl, 
+  IfExpressionImpl, 
+  BlockStatementImpl, 
+  FunctionLiteralImpl,
+  Identifier,
+  CallExpressionImpl
+} from "./ast"
 import { LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL } from './parser_constants'
 
 interface Parser {
@@ -12,7 +30,19 @@ interface Parser {
 }
 
 type PrefixParseFn = () => Expression | null
-type InfixParseFn = (expr: Expression) => Expression
+type InfixParseFn = (expr: Expression | null) => Expression
+
+const PRECEDENCES = new Map([
+  ["=", EQUALS],
+  ["!=", EQUALS],
+  ["<", LESSGREATER],
+  [">", LESSGREATER],
+  ["+", SUM],
+  ["-", SUM],
+  ["/", PRODUCT],
+  ["*", PRODUCT],
+  ["(", CALL],
+])
 
 class ParserImpl implements Parser {
   l: LexerImpl
@@ -33,10 +63,24 @@ class ParserImpl implements Parser {
     this.prefixParseFns = new Map<string, PrefixParseFn>()
     this.registerPrefix("", this.parseIdentifier.bind(this))
     this.registerPrefix("INT", this.parseIntegerLiteral.bind(this))
-
-    this.infixParseFns = new Map<string, InfixParseFn>()
     this.registerPrefix("!", this.parsePrefixExpression.bind(this))
     this.registerPrefix("-", this.parsePrefixExpression.bind(this))
+    this.registerPrefix("TRUE", this.parseBoolean.bind(this))
+    this.registerPrefix("FALSE", this.parseBoolean.bind(this))
+    this.registerPrefix("(", this.parseGroupedExpression.bind(this))
+    this.registerPrefix("IF", this.parseIfExpression.bind(this))
+    this.registerPrefix("FUNCTION", this.parseFunctionLiteral.bind(this))
+
+    this.infixParseFns = new Map<string, InfixParseFn>()
+    this.registerInfix("+", this.parseInfixExpression.bind(this))
+    this.registerInfix("-", this.parseInfixExpression.bind(this))
+    this.registerInfix("/", this.parseInfixExpression.bind(this))
+    this.registerInfix("*", this.parseInfixExpression.bind(this))
+    this.registerInfix("=", this.parseInfixExpression.bind(this))
+    this.registerInfix("!=", this.parseInfixExpression.bind(this))
+    this.registerInfix("<", this.parseInfixExpression.bind(this))
+    this.registerInfix(">", this.parseInfixExpression.bind(this))
+    this.registerInfix("(", this.parseCallExpression.bind(this))
   }
 
   nextToken() {
@@ -84,6 +128,10 @@ class ParserImpl implements Parser {
       return null
     }
 
+    this.nextToken()
+
+    stmt.value = this.parseExpression(LOWEST)
+
     while(!this.currTokenIs(";")) {
       this.nextToken()
     }
@@ -95,6 +143,8 @@ class ParserImpl implements Parser {
     const stmt = new ReturnStmtImpl(this.currToken)
 
     this.nextToken()
+
+    stmt.returnValue = this.parseExpression(LOWEST)
 
     while(!this.currTokenIs(";")) {
       this.nextToken()
@@ -123,13 +173,24 @@ class ParserImpl implements Parser {
       return null 
     }
 
-    const leftExp = prefix()
+    let leftExp = prefix()
+
+    while(!this.peekTokenIs(';') && precedence < this.peekPrecedence()) {
+      const infix = this.infixParseFns.get(this.peekToken.type) 
+
+      if(!infix) {
+        return leftExp
+      }
+
+      this.nextToken()
+
+      leftExp = infix(leftExp)
+    } 
 
     return leftExp
   }
 
   parseIntegerLiteral(): Expression | null {
-    console.log('parse literal: ', this.currToken);
     const lit = new IntegerLiteralImpl(this.currToken)
 
     const value = parseInt(this.currToken.literal)
@@ -159,6 +220,166 @@ class ParserImpl implements Parser {
     return expression
   }
 
+  parseInfixExpression(left: Expression | null): Expression {
+    const expression = new InfixExpressionImpl(this.currToken, this.currToken.literal, left)
+
+    const precedence = this.currPrecedence()
+    this.nextToken()
+    expression.right = this.parseExpression(precedence)
+
+    return expression
+  }
+
+  parseBoolean(): Expression {
+    return new BooleanImpl(this.currToken, this.currTokenIs("TRUE"))
+  }
+
+  parseGroupedExpression(): Expression | null{
+    this.nextToken()
+
+    const exp = this.parseExpression(LOWEST)
+
+    if(!this.expectPeek(')')) {
+      return null
+    }
+
+    return exp
+  }
+
+  parseIfExpression(): Expression | null {
+    const expression = new IfExpressionImpl(this.currToken) 
+
+    if(!this.expectPeek('(')) {
+      return null
+    }
+
+    this.nextToken()
+    expression.condition = this.parseExpression(LOWEST)
+
+    if(!this.expectPeek(')')) {
+      return null
+    }
+
+    if(!this.expectPeek('{')) {
+      return null
+    }
+
+    expression.consequence = this.parseBlockStatement()
+
+    if(this.peekTokenIs("ELSE")) {
+      this.nextToken() 
+
+      if(!this.peekTokenIs('{')) {
+        return null
+      }
+
+      expression.alternative = this.parseBlockStatement()
+    }
+
+    return expression
+  }
+
+  parseBlockStatement(): BlockStatement {
+    const block = new BlockStatementImpl(this.currToken)
+    block.statements = []
+
+    this.nextToken()
+
+    while(!this.currTokenIs('}') && !this.currTokenIs("EOF")) {
+      const stmt = this.parseStatement()
+      if(stmt !== null) {
+        block.statements.push(stmt)
+      }
+
+      this.nextToken()
+    }
+
+    return block
+  }
+
+  parseFunctionLiteral(): Expression | null {
+    const lit = new FunctionLiteralImpl(this.currToken)
+
+    if(!this.expectPeek('(')) {
+      return null
+    }
+
+    lit.parameters = this.parseFunctionParameters()
+
+    if(!this.expectPeek('{')) {
+      return null
+    }
+
+    lit.body = this.parseBlockStatement()
+
+    return lit
+  }
+
+  parseFunctionParameters(): Identifier[] {
+    const identifiers: Identifier[] = []
+
+    if(this.peekTokenIs(')')) {
+      this.nextToken()
+      return identifiers
+    }
+
+    this.nextToken()
+
+    const ident = new IdentifierImpl(this.currToken, this.currToken.literal)
+    identifiers.push(ident)
+
+    while (this.peekTokenIs(',')) {
+      this.nextToken()
+      this.nextToken()
+
+      const ident = new IdentifierImpl(this.currToken, this.currToken.literal)
+      identifiers.push(ident)
+    }
+
+    if(!this.expectPeek(')')) {
+      return []
+    }
+
+    return identifiers
+  }
+
+  parseCallExpression(fn: Expression | null): Expression {
+    const exp = new CallExpressionImpl(this.currToken, fn)
+    exp.arguments = this.parseCallArguments()
+
+    return exp
+  }
+
+  parseCallArguments(): Expression[] {
+    const args: Expression[] = []
+
+    if(this.peekTokenIs(')')) {
+      this.nextToken()
+      return args
+    }
+
+    this.nextToken()
+    const arg = this.parseExpression(LOWEST)
+    if(arg) {
+      args.push(arg)
+    }
+
+    while(this.peekTokenIs(',')) {
+      this.nextToken()
+      this.nextToken()
+      const arg = this.parseExpression(LOWEST)
+      if (arg) {
+        args.push(arg)
+      }
+    }
+
+    if(!this.expectPeek(')')) {
+      return []
+    }
+
+    return args
+  }
+
   currTokenIs(t: TokenType): boolean {
     return this.currToken.type === t
   }
@@ -182,6 +403,14 @@ class ParserImpl implements Parser {
     this.errors.push(msg)
   }
 
+  peekPrecedence(): number {
+    return PRECEDENCES.get(this.peekToken.type) ?? LOWEST
+  }
+
+  currPrecedence(): number {
+    return PRECEDENCES.get(this.currToken.type) ?? LOWEST
+  }
+
   registerPrefix(tokenType: TokenType, fn: PrefixParseFn) {
     this.prefixParseFns.set(tokenType, fn)
   }
@@ -191,7 +420,7 @@ class ParserImpl implements Parser {
   }
 
   noPrefixParseFnError(t: TokenType) {
-    const msg = `no prefix parse fundtion for ${t} found`
+    const msg = `no prefix parse function for ${t} found`
     this.errors.push(msg)
   }
 }
