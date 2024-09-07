@@ -1,3 +1,4 @@
+// Token  
 export type TokenType = string;
 
 export type Token = {
@@ -5,33 +6,33 @@ export type Token = {
   literal: string,
 };
 
-const ILLEGAL = "ILLEGAL";
-const EOF = "EOF";
-const IDENT = "";
-const INT = "INT" ;
-const ASSIGN = "=";
-const PLUS = "+";
-const COMMA = ",";
-const SEMICOLON = ";";
-const LPAREN = "(";
-const RPAREN = ")";
-const LBRACE = "{";
-const RBRACE = "}";
-const FUNCTION = "FUNCTION";
-const LET = "LET";
-const TRUE = "TRUE";
-const FALSE = "FALSE";
-const IF = "IF";
-const ELSE = "ELSE";
-const RETURN = "RETURN";
-const MINUS = "-";
-const BANG = "!";
-const ASTERISK = "*";
-const SLASH = "/";
-const LT = "<";
-const GT = ">";
-const EQ = "=="
-const NOT_EQ = "!="
+export const ILLEGAL = "ILLEGAL" as const;
+export const EOF = "EOF" as const;
+export const IDENT = "" as const;
+export const INT = "INT" as const;
+export const ASSIGN = "=" as const;
+export const PLUS = "+" as const;
+export const COMMA = "," as const;
+export const SEMICOLON = ";" as const;
+export const LPAREN = "(" as const;
+export const RPAREN = ")" as const;
+export const LBRACE = "{" as const;
+export const RBRACE = "}" as const;
+export const FUNCTION = "FUNCTION" as const;
+export const LET = "LET" as const;
+export const TRUE = "TRUE" as const;
+export const FALSE = "FALSE"as const;
+export const IF = "IF"as const;
+export const ELSE = "ELSE"as const;
+export const RETURN = "RETURN"as const;
+export const MINUS = "-"as const;
+export const BANG = "!"as const;
+export const ASTERISK = "*"as const;
+export const SLASH = "/"as const;
+export const LT = "<"as const;
+export const GT = ">"as const;
+export const EQ = "==" as const
+export const NOT_EQ = "!=" as const
 
 const KEYWORDS = new Map<string, TokenType>([
   ["fn", FUNCTION],
@@ -99,7 +100,7 @@ class LexerImpl implements Lexer {
         const peek = new TextDecoder().decode(this.peekChar())
         if(peek === '=') {
           const char = new TextDecoder().decode(this.ch)
-          this.readChar
+          this.readChar()
           tok = { type: EQ, literal: char + peek }
         } else {
           tok = this.newToken(ASSIGN, this.ch);
@@ -140,7 +141,7 @@ class LexerImpl implements Lexer {
         const peek = new TextDecoder().decode(this.peekChar())
         if(peek === '=') {
           const char = new TextDecoder().decode(this.ch)
-          this.readChar
+          this.readChar()
           tok = { type: NOT_EQ, literal: char + peek }
         } else {
           tok = this.newToken(BANG, this.ch);

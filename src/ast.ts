@@ -13,7 +13,7 @@ export interface Expression extends Node {
   expressionNode(): any 
 }
 
-interface Program extends Node {
+export interface Program extends Node {
   statements: Statement[]
 }
 
@@ -28,7 +28,7 @@ interface ReturnStmt extends Statement {
   returnValue: Expression | null
 }
 
-interface ExpressionStmt extends Statement {
+export interface ExpressionStmt extends Statement {
   token: Token
   expression: Expression | null
 }
@@ -43,20 +43,20 @@ export interface IntegerLiteral extends Expression {
   value: number
 }
 
-interface PrefixExpression extends Expression {
+export interface PrefixExpression extends Expression {
   token: Token
   operator: string
   right: Expression | null
 }
 
-interface InfixExpression extends Expression {
+export interface InfixExpression extends Expression {
   token: Token
   left: Expression | null
   operator: string
   right: Expression | null
 }
 
-interface Boolean extends Expression {
+export interface Boolean extends Expression {
   token: Token
   value: boolean
 }
@@ -410,5 +410,3 @@ export class CallExpressionImpl implements CallExpression {
     return out
   }
 }
-
-

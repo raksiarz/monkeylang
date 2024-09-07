@@ -1,19 +1,19 @@
 type ObjectType = string
 
-const INTEGER_OBJ = 'INTEGER'
-const BOOLEAN_OBJ = 'BOOLEAN'
-const NULL_OBJ = 'NULL'
+export const INTEGER_OBJ = 'INTEGER' as const
+export const BOOLEAN_OBJ = 'BOOLEAN' as const
+export const NULL_OBJ = 'NULL' as const
 
 export interface Object {
   type(): ObjectType
   inspect(): string
 }
 
-interface Integer extends Object {
+export interface Integer extends Object {
   value: number
 }
 
-interface Bool extends Object {
+export interface Bool extends Object {
   value: boolean
 }
 
@@ -51,7 +51,7 @@ export class BoolImpl implements Bool {
   }
 }
 
-class NullImpl implements Null {
+export class NullImpl implements Null {
   constructor() {}
 
   type(): ObjectType {

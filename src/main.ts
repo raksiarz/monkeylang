@@ -29,9 +29,10 @@ const getInput = function () {
       printParseErrors(parser.errors)
     }
 
-    console.log('program: ', typeof(program))
     const evaluated = evaluate(program)
-    console.log('eval: ', evaluated)
+    if(!!evaluated) {
+      console.log(evaluated.inspect())
+    }
 
     // for (let i = 0; i < input.length; i++) {
     //   const tok = lexer.nextToken()

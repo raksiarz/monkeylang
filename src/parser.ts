@@ -1,4 +1,4 @@
-import LexerImpl, { Token, TokenType } from "./tokenizer"
+import LexerImpl, { ASSIGN, COMMA, ELSE, EOF, LBRACE, LET, LPAREN, RBRACE, RETURN, RPAREN, SEMICOLON, Token, TokenType, TRUE } from "./tokenizer"
 import { 
   IdentifierImpl, 
   LetStmtImpl, 
@@ -33,7 +33,7 @@ type PrefixParseFn = () => Expression | null
 type InfixParseFn = (expr: Expression | null) => Expression
 
 const PRECEDENCES = new Map([
-  ["=", EQUALS],
+  ["==", EQUALS],
   ["!=", EQUALS],
   ["<", LESSGREATER],
   [">", LESSGREATER],
@@ -76,7 +76,7 @@ class ParserImpl implements Parser {
     this.registerInfix("-", this.parseInfixExpression.bind(this))
     this.registerInfix("/", this.parseInfixExpression.bind(this))
     this.registerInfix("*", this.parseInfixExpression.bind(this))
-    this.registerInfix("=", this.parseInfixExpression.bind(this))
+    this.registerInfix("==", this.parseInfixExpression.bind(this))
     this.registerInfix("!=", this.parseInfixExpression.bind(this))
     this.registerInfix("<", this.parseInfixExpression.bind(this))
     this.registerInfix(">", this.parseInfixExpression.bind(this))
@@ -91,7 +91,7 @@ class ParserImpl implements Parser {
   parseProgram(): ProgramImpl {
     this.program = new ProgramImpl()
 
-    while(this.currToken.type !== "EOF") {
+    while(this.currToken.type !== EOF) {
       const stmt = this.parseStatement()
 
       if(stmt !== null) {
@@ -106,9 +106,9 @@ class ParserImpl implements Parser {
 
   parseStatement() {
     switch(this.currToken.type) {
-      case "LET": 
+      case LET: 
         return this.parseLetStatement()
-      case "RETURN":
+      case RETURN:
         return this.parseReturnStatement()
       default:
         return this.parseExpressionStatement() 
@@ -124,7 +124,7 @@ class ParserImpl implements Parser {
 
     stmt.name = new IdentifierImpl(this.currToken, this.currToken.literal)
 
-    if(!this.expectPeek("=")) {
+    if(!this.expectPeek(ASSIGN)) {
       return null
     }
 
@@ -132,7 +132,7 @@ class ParserImpl implements Parser {
 
     stmt.value = this.parseExpression(LOWEST)
 
-    while(!this.currTokenIs(";")) {
+    while(!this.currTokenIs(SEMICOLON)) {
       this.nextToken()
     }
 
@@ -146,7 +146,7 @@ class ParserImpl implements Parser {
 
     stmt.returnValue = this.parseExpression(LOWEST)
 
-    while(!this.currTokenIs(";")) {
+    while(!this.currTokenIs(SEMICOLON)) {
       this.nextToken()
     }
 
@@ -158,7 +158,7 @@ class ParserImpl implements Parser {
 
     stmt.expression = this.parseExpression(LOWEST)
 
-    if(this.peekTokenIs(";")) {
+    if(this.peekTokenIs(SEMICOLON)) {
       this.nextToken()
     }
 
@@ -231,7 +231,7 @@ class ParserImpl implements Parser {
   }
 
   parseBoolean(): Expression {
-    return new BooleanImpl(this.currToken, this.currTokenIs("TRUE"))
+    return new BooleanImpl(this.currToken, this.currTokenIs(TRUE))
   }
 
   parseGroupedExpression(): Expression | null{
@@ -239,7 +239,7 @@ class ParserImpl implements Parser {
 
     const exp = this.parseExpression(LOWEST)
 
-    if(!this.expectPeek(')')) {
+    if(!this.expectPeek(RPAREN)) {
       return null
     }
 
@@ -249,27 +249,27 @@ class ParserImpl implements Parser {
   parseIfExpression(): Expression | null {
     const expression = new IfExpressionImpl(this.currToken) 
 
-    if(!this.expectPeek('(')) {
+    if(!this.expectPeek(LPAREN)) {
       return null
     }
 
     this.nextToken()
     expression.condition = this.parseExpression(LOWEST)
 
-    if(!this.expectPeek(')')) {
+    if(!this.expectPeek(RPAREN)) {
       return null
     }
 
-    if(!this.expectPeek('{')) {
+    if(!this.expectPeek(LBRACE)) {
       return null
     }
 
     expression.consequence = this.parseBlockStatement()
 
-    if(this.peekTokenIs("ELSE")) {
+    if(this.peekTokenIs(ELSE)) {
       this.nextToken() 
 
-      if(!this.peekTokenIs('{')) {
+      if(!this.peekTokenIs(LBRACE)) {
         return null
       }
 
@@ -285,7 +285,7 @@ class ParserImpl implements Parser {
 
     this.nextToken()
 
-    while(!this.currTokenIs('}') && !this.currTokenIs("EOF")) {
+    while(!this.currTokenIs(RBRACE) && !this.currTokenIs(EOF)) {
       const stmt = this.parseStatement()
       if(stmt !== null) {
         block.statements.push(stmt)
@@ -300,13 +300,13 @@ class ParserImpl implements Parser {
   parseFunctionLiteral(): Expression | null {
     const lit = new FunctionLiteralImpl(this.currToken)
 
-    if(!this.expectPeek('(')) {
+    if(!this.expectPeek(LPAREN)) {
       return null
     }
 
     lit.parameters = this.parseFunctionParameters()
 
-    if(!this.expectPeek('{')) {
+    if(!this.expectPeek(LBRACE)) {
       return null
     }
 
@@ -318,7 +318,7 @@ class ParserImpl implements Parser {
   parseFunctionParameters(): Identifier[] {
     const identifiers: Identifier[] = []
 
-    if(this.peekTokenIs(')')) {
+    if(this.peekTokenIs(RPAREN)) {
       this.nextToken()
       return identifiers
     }
@@ -328,7 +328,7 @@ class ParserImpl implements Parser {
     const ident = new IdentifierImpl(this.currToken, this.currToken.literal)
     identifiers.push(ident)
 
-    while (this.peekTokenIs(',')) {
+    while (this.peekTokenIs(COMMA)) {
       this.nextToken()
       this.nextToken()
 
@@ -336,7 +336,7 @@ class ParserImpl implements Parser {
       identifiers.push(ident)
     }
 
-    if(!this.expectPeek(')')) {
+    if(!this.expectPeek(RPAREN)) {
       return []
     }
 
@@ -353,7 +353,7 @@ class ParserImpl implements Parser {
   parseCallArguments(): Expression[] {
     const args: Expression[] = []
 
-    if(this.peekTokenIs(')')) {
+    if(this.peekTokenIs(RPAREN)) {
       this.nextToken()
       return args
     }
@@ -364,7 +364,7 @@ class ParserImpl implements Parser {
       args.push(arg)
     }
 
-    while(this.peekTokenIs(',')) {
+    while(this.peekTokenIs(COMMA)) {
       this.nextToken()
       this.nextToken()
       const arg = this.parseExpression(LOWEST)
@@ -373,7 +373,7 @@ class ParserImpl implements Parser {
       }
     }
 
-    if(!this.expectPeek(')')) {
+    if(!this.expectPeek(RPAREN)) {
       return []
     }
 
