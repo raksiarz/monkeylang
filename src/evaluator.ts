@@ -1,4 +1,4 @@
-import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression } from './ast'
+import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl } from './ast'
 import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
@@ -32,6 +32,12 @@ export function evaluate(node: Node | Expression | Statement | null): Object {
       const rightEval = evaluate(prefixNode.right)
 
       return evaluatePrefixExpression(prefixNode.operator, rightEval)
+
+    case node instanceof BlockStatementImpl:
+      return evaluateStatements((node as BlockStatement).statements)
+    
+    case node instanceof IfExpressionImpl:
+      return evaluateIfExpression(node as IfExpression)
   }
 
   return NULL
@@ -135,5 +141,33 @@ function evaluateInfixIntegerExpression(operator: string, left: Object, right: O
 
     default:
       return NULL
+  }
+}
+
+function evaluateIfExpression(ie: IfExpression): Object {
+  const condition = evaluate(ie.condition)
+
+  if(isTruthy(condition)) {
+    return evaluate(ie.consequence)
+  } else if(ie.alternative !== null) {
+    return evaluate(ie.alternative)
+  } else {
+    return NULL
+  }
+}
+
+function isTruthy(obj: Object): boolean {
+  switch(obj) {
+    case NULL:
+      return false
+    
+    case TRUE:
+      return true
+
+    case FALSE: 
+      return false
+
+    default:
+      return true
   }
 }

@@ -1,4 +1,4 @@
-import LexerImpl, { ASSIGN, COMMA, ELSE, EOF, LBRACE, LET, LPAREN, RBRACE, RETURN, RPAREN, SEMICOLON, Token, TokenType, TRUE } from "./tokenizer"
+import LexerImpl, { ASSIGN, ASTERISK, BANG, COMMA, ELSE, EOF, EQ, FALSE, FUNCTION, GT, IDENT, IF, INT, LBRACE, LET, LPAREN, LT, MINUS, NOT_EQ, PLUS, RBRACE, RETURN, RPAREN, SEMICOLON, SLASH, Token, TokenType, TRUE } from "./tokenizer"
 import { 
   IdentifierImpl, 
   LetStmtImpl, 
@@ -61,26 +61,26 @@ class ParserImpl implements Parser {
     this.nextToken()
 
     this.prefixParseFns = new Map<string, PrefixParseFn>()
-    this.registerPrefix("", this.parseIdentifier.bind(this))
-    this.registerPrefix("INT", this.parseIntegerLiteral.bind(this))
-    this.registerPrefix("!", this.parsePrefixExpression.bind(this))
-    this.registerPrefix("-", this.parsePrefixExpression.bind(this))
-    this.registerPrefix("TRUE", this.parseBoolean.bind(this))
-    this.registerPrefix("FALSE", this.parseBoolean.bind(this))
-    this.registerPrefix("(", this.parseGroupedExpression.bind(this))
-    this.registerPrefix("IF", this.parseIfExpression.bind(this))
-    this.registerPrefix("FUNCTION", this.parseFunctionLiteral.bind(this))
+    this.registerPrefix(IDENT, this.parseIdentifier.bind(this))
+    this.registerPrefix(INT, this.parseIntegerLiteral.bind(this))
+    this.registerPrefix(BANG, this.parsePrefixExpression.bind(this))
+    this.registerPrefix(MINUS, this.parsePrefixExpression.bind(this))
+    this.registerPrefix(TRUE, this.parseBoolean.bind(this))
+    this.registerPrefix(FALSE, this.parseBoolean.bind(this))
+    this.registerPrefix(LPAREN, this.parseGroupedExpression.bind(this))
+    this.registerPrefix(IF, this.parseIfExpression.bind(this))
+    this.registerPrefix(FUNCTION, this.parseFunctionLiteral.bind(this))
 
     this.infixParseFns = new Map<string, InfixParseFn>()
-    this.registerInfix("+", this.parseInfixExpression.bind(this))
-    this.registerInfix("-", this.parseInfixExpression.bind(this))
-    this.registerInfix("/", this.parseInfixExpression.bind(this))
-    this.registerInfix("*", this.parseInfixExpression.bind(this))
-    this.registerInfix("==", this.parseInfixExpression.bind(this))
-    this.registerInfix("!=", this.parseInfixExpression.bind(this))
-    this.registerInfix("<", this.parseInfixExpression.bind(this))
-    this.registerInfix(">", this.parseInfixExpression.bind(this))
-    this.registerInfix("(", this.parseCallExpression.bind(this))
+    this.registerInfix(PLUS, this.parseInfixExpression.bind(this))
+    this.registerInfix(MINUS, this.parseInfixExpression.bind(this))
+    this.registerInfix(SLASH, this.parseInfixExpression.bind(this))
+    this.registerInfix(ASTERISK, this.parseInfixExpression.bind(this))
+    this.registerInfix(EQ, this.parseInfixExpression.bind(this))
+    this.registerInfix(NOT_EQ, this.parseInfixExpression.bind(this))
+    this.registerInfix(LT, this.parseInfixExpression.bind(this))
+    this.registerInfix(GT, this.parseInfixExpression.bind(this))
+    this.registerInfix(LPAREN, this.parseCallExpression.bind(this))
   }
 
   nextToken() {
@@ -175,7 +175,7 @@ class ParserImpl implements Parser {
 
     let leftExp = prefix()
 
-    while(!this.peekTokenIs(';') && precedence < this.peekPrecedence()) {
+    while(!this.peekTokenIs(SEMICOLON) && precedence < this.peekPrecedence()) {
       const infix = this.infixParseFns.get(this.peekToken.type) 
 
       if(!infix) {
@@ -269,7 +269,7 @@ class ParserImpl implements Parser {
     if(this.peekTokenIs(ELSE)) {
       this.nextToken() 
 
-      if(!this.peekTokenIs(LBRACE)) {
+      if(!this.expectPeek(LBRACE)) {
         return null
       }
 
@@ -420,6 +420,7 @@ class ParserImpl implements Parser {
   }
 
   noPrefixParseFnError(t: TokenType) {
+    console.trace()
     const msg = `no prefix parse function for ${t} found`
     this.errors.push(msg)
   }

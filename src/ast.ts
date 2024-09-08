@@ -61,7 +61,7 @@ export interface Boolean extends Expression {
   value: boolean
 }
 
-interface IfExpression extends Expression {
+export interface IfExpression extends Expression {
   token: Token
   condition: Expression | null
   consequence: BlockStatement
@@ -73,13 +73,13 @@ export interface BlockStatement extends Statement {
   statements: Statement[]
 }
 
-interface FunctionLiteral extends Expression{
+export interface FunctionLiteral extends Expression{
   token: Token
   parameters: Identifier[]
   body: BlockStatement
 }
 
-interface CallExpression extends Expression {
+export interface CallExpression extends Expression {
   token: Token
   fn: Expression | null
   arguments: Expression[]
