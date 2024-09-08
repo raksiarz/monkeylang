@@ -23,7 +23,7 @@ export interface LetStmt extends Statement {
   value: Expression | null
 }
 
-interface ReturnStmt extends Statement {
+export interface ReturnStmt extends Statement {
   token: Token
   returnValue: Expression | null
 }

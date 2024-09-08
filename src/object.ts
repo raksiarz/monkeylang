@@ -3,6 +3,7 @@ type ObjectType = string
 export const INTEGER_OBJ = 'INTEGER' as const
 export const BOOLEAN_OBJ = 'BOOLEAN' as const
 export const NULL_OBJ = 'NULL' as const
+export const RETURN_VALUE_OBJ = 'RETURN_VALUE' as const
 
 export interface Object {
   type(): ObjectType
@@ -18,6 +19,10 @@ export interface Bool extends Object {
 }
 
 interface Null extends Object {}
+
+export interface ReturnValue extends Object {
+  value: Object
+}
 
 export class IntegerImpl implements Integer {
   value: number
@@ -60,5 +65,21 @@ export class NullImpl implements Null {
 
   inspect(): string {
     return 'null'
+  }
+}
+
+export class ReturnValueImpl implements ReturnValue {
+  value: Object
+
+  constructor(value: Object) {
+    this.value = value
+  }
+
+  type(): ObjectType {
+    return RETURN_VALUE_OBJ
+  }
+
+  inspect(): string {
+    return this.value.inspect()
   }
 }

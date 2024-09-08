@@ -1,5 +1,5 @@
-import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl } from './ast'
-import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer } from './object'
+import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt } from './ast'
+import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
 const NULL = new NullImpl()
@@ -9,7 +9,7 @@ const TRUE = new BoolImpl(true)
 export function evaluate(node: Node | Expression | Statement | null): Object {
   switch(true) {
     case node instanceof ProgramImpl:
-      return evaluateStatements((node as Program).statements)
+      return evaluateProgram((node as Program).statements)
 
     case node instanceof ExpressionStmtImpl:
       return evaluate((node as ExpressionStmt)?.expression)
@@ -34,10 +34,14 @@ export function evaluate(node: Node | Expression | Statement | null): Object {
       return evaluatePrefixExpression(prefixNode.operator, rightEval)
 
     case node instanceof BlockStatementImpl:
-      return evaluateStatements((node as BlockStatement).statements)
+      return evaluateBlockStatement((node as BlockStatement))
     
     case node instanceof IfExpressionImpl:
       return evaluateIfExpression(node as IfExpression)
+
+    case node instanceof ReturnStmtImpl:
+      const val = evaluate((node as ReturnStmt).returnValue)
+      return new ReturnValueImpl(val)
   }
 
   return NULL
@@ -51,11 +55,29 @@ function nativeBoolToBooleanObject(input: boolean): Bool {
   return FALSE
 }
 
-function evaluateStatements(stmts: Statement[]): Object {
+function evaluateProgram(stmts: Statement[]): Object {
   let result: Object = NULL
 
   for(let i = 0; i < stmts.length; i++) {
     result = evaluate(stmts[i])
+
+    if(!!(result as ReturnValue).value) {
+      return (result as ReturnValue).value
+    }
+  }
+
+  return result
+}
+
+function evaluateBlockStatement(block: BlockStatement): Object {
+  let result = <Object>{}
+
+  for(let i = 0; i < block.statements.length; i++) {
+    result = evaluate(block.statements[i])
+
+    if(result !== null && result.type() == RETURN_VALUE_OBJ) {
+      return result
+    }
   }
 
   return result
