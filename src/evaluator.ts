@@ -1,5 +1,5 @@
 import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt } from './ast'
-import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ } from './object'
+import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
 const NULL = new NullImpl()
@@ -20,7 +20,14 @@ export function evaluate(node: Node | Expression | Statement | null): Object {
     case node instanceof InfixExpressionImpl:
       const infixNode = node as InfixExpression
       const left = evaluate(infixNode.left)
+      if(isError(left)) {
+        return left
+      }
+
       const right = evaluate(infixNode.right)
+      if(isError(right)) {
+        return right
+      }
 
       return evaluateInfixExpression(infixNode.operator, left, right)
 
@@ -30,6 +37,9 @@ export function evaluate(node: Node | Expression | Statement | null): Object {
     case node instanceof PrefixExpressionImpl:
       const prefixNode = node as PrefixExpression
       const rightEval = evaluate(prefixNode.right)
+      if(isError(rightEval)) {
+        return rightEval
+      }
 
       return evaluatePrefixExpression(prefixNode.operator, rightEval)
 
@@ -40,7 +50,10 @@ export function evaluate(node: Node | Expression | Statement | null): Object {
       return evaluateIfExpression(node as IfExpression)
 
     case node instanceof ReturnStmtImpl:
-      const val = evaluate((node as ReturnStmt).returnValue)
+      const val = evaluate((node as ReturnStmt).returnValue)  
+      if(isError(val)) {
+        return val
+      }
       return new ReturnValueImpl(val)
   }
 
@@ -61,8 +74,12 @@ function evaluateProgram(stmts: Statement[]): Object {
   for(let i = 0; i < stmts.length; i++) {
     result = evaluate(stmts[i])
 
-    if(!!(result as ReturnValue).value) {
-      return (result as ReturnValue).value
+    switch(true) {
+      case result.type() === RETURN_VALUE_OBJ:
+        return (result as ReturnValue).value
+
+      case result.type() === ERROR_OBJ:
+        return result
     }
   }
 
@@ -75,9 +92,14 @@ function evaluateBlockStatement(block: BlockStatement): Object {
   for(let i = 0; i < block.statements.length; i++) {
     result = evaluate(block.statements[i])
 
-    if(result !== null && result.type() == RETURN_VALUE_OBJ) {
-      return result
+    if(result !== null) {
+      const rt = result.type()
+
+      if (rt === RETURN_VALUE_OBJ || rt === ERROR_OBJ) {
+        return result
+      }
     }
+
   }
 
   return result
@@ -90,7 +112,7 @@ function evaluatePrefixExpression(operator: string, right: Object | null): Objec
     case MINUS:
       return evalueateMinusPrefixOperatorExpression(right)
     default:
-      return NULL
+      return newError('unknown operator: ', operator, right?.type()) 
   }
 }
 
@@ -127,8 +149,11 @@ function evaluateInfixExpression(operator: string, left: Object, right: Object):
     case operator == NOT_EQ:
       return new BoolImpl(left != right)
 
+    case left.type() !== right.type(): 
+      return newError('type mismatch: ', left.type(), operator, right.type())
+
     default:
-      return NULL
+      return newError('unknown operator: ', left.type(), operator, right.type())
   }
 }
 
@@ -162,12 +187,15 @@ function evaluateInfixIntegerExpression(operator: string, left: Object, right: O
       return new BoolImpl(leftVal > rightVal)
 
     default:
-      return NULL
+      return newError('unknown operator: ', left.type(), operator, right.type())
   }
 }
 
 function evaluateIfExpression(ie: IfExpression): Object {
   const condition = evaluate(ie.condition)
+  if(isError(condition)) {
+    return condition
+  }
 
   if(isTruthy(condition)) {
     return evaluate(ie.consequence)
@@ -192,4 +220,20 @@ function isTruthy(obj: Object): boolean {
     default:
       return true
   }
+}
+
+function newError(format: string, ...args: any[]): ErrorImpl {
+  let msg = ''
+  for(let i = 0; i < args.length; i++) {
+    msg += ' ' + args[i]
+  }
+  return new ErrorImpl(format + msg)
+}
+
+function isError(obj: Object): boolean {
+  if(obj !== null) {
+    return obj.type() === ERROR_OBJ
+  }
+
+  return false
 }

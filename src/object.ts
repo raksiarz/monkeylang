@@ -4,6 +4,7 @@ export const INTEGER_OBJ = 'INTEGER' as const
 export const BOOLEAN_OBJ = 'BOOLEAN' as const
 export const NULL_OBJ = 'NULL' as const
 export const RETURN_VALUE_OBJ = 'RETURN_VALUE' as const
+export const ERROR_OBJ = 'ERROR' as const
 
 export interface Object {
   type(): ObjectType
@@ -22,6 +23,10 @@ interface Null extends Object {}
 
 export interface ReturnValue extends Object {
   value: Object
+}
+
+export interface Error extends Object {
+  message: string
 }
 
 export class IntegerImpl implements Integer {
@@ -81,5 +86,21 @@ export class ReturnValueImpl implements ReturnValue {
 
   inspect(): string {
     return this.value.inspect()
+  }
+}
+
+export class ErrorImpl implements Error {
+  message: string
+
+  constructor(message: string) {
+    this.message = message
+  }
+
+  type(): ObjectType {
+    return ERROR_OBJ
+  }
+
+  inspect(): string {
+    return "ERROR: " + this.message
   }
 }
