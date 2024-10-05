@@ -1,4 +1,4 @@
-import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt } from './ast'
+import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl } from './ast'
 import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
@@ -55,6 +55,12 @@ export function evaluate(node: Node | Expression | Statement | null): Object {
         return val
       }
       return new ReturnValueImpl(val)
+
+    case node instanceof LetStmtImpl:
+      const value = evaluate(node.value)
+      if(isError(value)) {
+        return value 
+      }
   }
 
   return NULL
@@ -112,7 +118,7 @@ function evaluatePrefixExpression(operator: string, right: Object | null): Objec
     case MINUS:
       return evalueateMinusPrefixOperatorExpression(right)
     default:
-      return newError('unknown operator: ', operator, right?.type()) 
+      return newError('unknown operator:', operator, right?.type()) 
   }
 }
 
@@ -150,10 +156,10 @@ function evaluateInfixExpression(operator: string, left: Object, right: Object):
       return new BoolImpl(left != right)
 
     case left.type() !== right.type(): 
-      return newError('type mismatch: ', left.type(), operator, right.type())
+      return newError('type mismatch:', left.type(), operator, right.type())
 
     default:
-      return newError('unknown operator: ', left.type(), operator, right.type())
+      return newError('unknown operator:', left.type(), operator, right.type())
   }
 }
 
@@ -187,7 +193,7 @@ function evaluateInfixIntegerExpression(operator: string, left: Object, right: O
       return new BoolImpl(leftVal > rightVal)
 
     default:
-      return newError('unknown operator: ', left.type(), operator, right.type())
+      return newError('unknown operator:', left.type(), operator, right.type())
   }
 }
 
