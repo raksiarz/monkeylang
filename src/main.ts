@@ -1,6 +1,8 @@
 import LexerImpl, { Token } from "./tokenizer"
 import ParserImpl from "./parser"
 import { evaluate } from "./evaluator"
+import EnviromentImpl from "./enviroment"
+import { Object } from "./object"
 
 declare function require(name: string): any
 
@@ -13,6 +15,7 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
+const ENV = new EnviromentImpl(new Map<string, Object>)
 
 const getInput = function () {
   rl.question('>> ', function (input: string) {
@@ -29,7 +32,7 @@ const getInput = function () {
       printParseErrors(parser.errors)
     }
 
-    const evaluated = evaluate(program)
+    const evaluated = evaluate(program, ENV)
     if(!!evaluated) {
       console.log(evaluated.inspect())
     }
