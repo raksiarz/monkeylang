@@ -73,7 +73,7 @@ export interface BlockStatement extends Statement {
   statements: Statement[]
 }
 
-export interface FunctionLiteral extends Expression{
+export interface FunctionLiteral extends Expression {
   token: Token
   parameters: Identifier[]
   body: BlockStatement

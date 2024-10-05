@@ -1,13 +1,13 @@
-import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl, IdentifierImpl, LetStmt, Identifier } from './ast'
-import EnviromentImpl, { Enviroment } from './enviroment'
-import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ } from './object'
+import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl, IdentifierImpl, LetStmt, Identifier, FunctionLiteral, FunctionLiteralImpl, CallExpressionImpl, CallExpression } from './ast'
+import EnvironmentImpl, { Environment, newEnclosedEnvironment } from './environment'
+import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ, FunctionImpl, Function } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
 const NULL = new NullImpl()
 const FALSE = new BoolImpl(false)
 const TRUE = new BoolImpl(true)
 
-export function evaluate(node: Node | Expression | Statement | null, env: EnviromentImpl): Object {
+export function evaluate(node: Node | Expression | Statement | null, env: EnvironmentImpl): Object {
   switch(true) {
     case node instanceof ProgramImpl:
       return evaluateProgram((node as Program).statements, env)
@@ -68,6 +68,25 @@ export function evaluate(node: Node | Expression | Statement | null, env: Enviro
 
     case node instanceof IdentifierImpl:
       return evalIdentifier(node as Identifier, env)
+
+    case node instanceof FunctionLiteralImpl:
+      const funcNode = node as FunctionLiteral
+      const params = funcNode.parameters
+      const body = funcNode.body
+
+      return new FunctionImpl(params, body, env)
+    
+    case node instanceof CallExpressionImpl:
+      const fn = evaluate((node as CallExpression).fn, env)
+      if(isError(fn)) {
+        return fn
+      }
+      const args = evaluateExpression((node as CallExpression).arguments, env)
+      if(args.length === 1 && isError(args[0])) {
+        return args[0]
+      }
+
+      return applyFunction(fn, args)
   }
 
   return NULL
@@ -81,7 +100,7 @@ function nativeBoolToBooleanObject(input: boolean): Bool {
   return FALSE
 }
 
-function evaluateProgram(stmts: Statement[], env: EnviromentImpl): Object {
+function evaluateProgram(stmts: Statement[], env: EnvironmentImpl): Object {
   let result: Object = NULL
 
   for(let i = 0; i < stmts.length; i++) {
@@ -99,7 +118,7 @@ function evaluateProgram(stmts: Statement[], env: EnviromentImpl): Object {
   return result
 }
 
-function evaluateBlockStatement(block: BlockStatement, env: EnviromentImpl): Object {
+function evaluateBlockStatement(block: BlockStatement, env: EnvironmentImpl): Object {
   let result = <Object>{}
 
   for(let i = 0; i < block.statements.length; i++) {
@@ -204,7 +223,7 @@ function evaluateInfixIntegerExpression(operator: string, left: Object, right: O
   }
 }
 
-function evaluateIfExpression(ie: IfExpression, env: EnviromentImpl): Object {
+function evaluateIfExpression(ie: IfExpression, env: EnvironmentImpl): Object {
   const condition = evaluate(ie.condition, env)
   if(isError(condition)) {
     return condition
@@ -219,13 +238,59 @@ function evaluateIfExpression(ie: IfExpression, env: EnviromentImpl): Object {
   }
 }
 
-function evalIdentifier(node: IdentifierImpl, env: EnviromentImpl): Object {
+function evalIdentifier(node: IdentifierImpl, env: EnvironmentImpl): Object {
   const val = env.get(node.value)
   if(!!val) {
     return val
   }
 
   return newError("identifier not found " + node.value)
+}
+
+function evaluateExpression(exps: Expression[], env: EnvironmentImpl): Object[] {
+  const result: Object[] = []
+
+  for(let i = 0; i < exps.length; i++) {
+    const evaluated = evaluate(exps[i], env)
+    if(isError(evaluated)) {
+      return [evaluated as Object]
+    }
+
+    result.push(evaluated)
+  }
+
+  return result
+}
+
+function applyFunction(fn: Object, args: Object[]): Object {
+  const func = fn as Function
+  if(!func) {
+    return newError('not a function ' + fn.type())
+  }
+
+  const extendedEnv = extendFunctionEnv(func, args)
+  const evaluated = evaluate(func.body, extendedEnv)
+
+  return unwrapReturnValue(evaluated)
+}
+
+function extendFunctionEnv(fn: Function, args: Object[]): EnvironmentImpl {
+  const env = newEnclosedEnvironment(fn.env)
+
+  for(let i = 0; i < fn.parameters.length; i++) {
+    env.set(fn.parameters[i].value, args[i])
+  }
+  
+  return env
+}
+
+function unwrapReturnValue(obj: Object): Object {
+  const returnValue = obj as ReturnValue
+  if(!!returnValue) {
+    return returnValue
+  }
+
+  return obj
 }
 
 function isTruthy(obj: Object): boolean {

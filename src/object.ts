@@ -1,3 +1,6 @@
+import { BlockStatement, Identifier } from "./ast"
+import EnvironmentImpl, { Environment } from "./environment"
+
 type ObjectType = string
 
 export const INTEGER_OBJ = 'INTEGER' as const
@@ -5,6 +8,7 @@ export const BOOLEAN_OBJ = 'BOOLEAN' as const
 export const NULL_OBJ = 'NULL' as const
 export const RETURN_VALUE_OBJ = 'RETURN_VALUE' as const
 export const ERROR_OBJ = 'ERROR' as const
+export const FUNCTION_OBJ = 'FUNCTION' as const
 
 export interface Object {
   type(): ObjectType
@@ -27,6 +31,12 @@ export interface ReturnValue extends Object {
 
 export interface Error extends Object {
   message: string
+}
+
+export interface Function extends Object {
+  parameters: Identifier[]
+  body: BlockStatement
+  env: EnvironmentImpl
 }
 
 export class IntegerImpl implements Integer {
@@ -102,5 +112,35 @@ export class ErrorImpl implements Error {
 
   inspect(): string {
     return "ERROR: " + this.message
+  }
+}
+
+export class FunctionImpl implements Function {
+  parameters: Identifier[]
+  body: BlockStatement
+  env: EnvironmentImpl
+
+  constructor(parameters: Identifier[], body: BlockStatement, env: EnvironmentImpl) {
+    this.parameters = parameters
+    this.body = body
+    this.env = env
+  }
+
+  type(): ObjectType {
+    return FUNCTION_OBJ
+  } 
+
+  inspect(): string {
+    let out = ''
+
+    const params: string[] = []
+
+    for(let i = 0; i < this.parameters.length; i++) {
+      params.push(String(this.parameters[i]))
+    }
+
+    out += `fn (${params.join(', ')}) { \n${String(this.body)}\n}`
+
+    return out
   }
 }

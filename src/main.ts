@@ -1,7 +1,7 @@
 import LexerImpl, { Token } from "./tokenizer"
 import ParserImpl from "./parser"
 import { evaluate } from "./evaluator"
-import EnviromentImpl from "./enviroment"
+import EnvironmentImpl from "./environment"
 import { Object } from "./object"
 
 declare function require(name: string): any
@@ -15,7 +15,7 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
-const ENV = new EnviromentImpl(new Map<string, Object>)
+const ENV = new EnvironmentImpl(new Map<string, Object>, null)
 
 const getInput = function () {
   rl.question('>> ', function (input: string) {
