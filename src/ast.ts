@@ -85,6 +85,11 @@ export interface CallExpression extends Expression {
   arguments: Expression[]
 }
 
+export interface StringLiteral extends Expression {
+  token: Token
+  value: string
+}
+
 export class ProgramImpl implements Program {
   statements: Statement[]
 
@@ -408,5 +413,25 @@ export class CallExpressionImpl implements CallExpression {
     out += `${String(this.fn)}(${this.arguments.join(', ')})`
 
     return out
+  }
+}
+
+export class StringLiteralImpl implements StringLiteral {
+  token: Token
+  value: string
+
+  constructor(token: Token, value: string) {
+    this.token = token
+    this.value = value
+  }
+
+  expressionNode() {}
+
+  tokenLiteral(): string {
+    return this.token.literal
+  }
+
+  string(): string {
+    return this.token.literal
   }
 }

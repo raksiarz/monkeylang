@@ -1,4 +1,4 @@
-import LexerImpl, { ASSIGN, ASTERISK, BANG, COMMA, ELSE, EOF, EQ, FALSE, FUNCTION, GT, IDENT, IF, INT, LBRACE, LET, LPAREN, LT, MINUS, NOT_EQ, PLUS, RBRACE, RETURN, RPAREN, SEMICOLON, SLASH, Token, TokenType, TRUE } from "./tokenizer"
+import LexerImpl, { ASSIGN, ASTERISK, BANG, COMMA, ELSE, EOF, EQ, FALSE, FUNCTION, GT, IDENT, IF, INT, LBRACE, LET, LPAREN, LT, MINUS, NOT_EQ, PLUS, RBRACE, RETURN, RPAREN, SEMICOLON, SLASH, STRING, Token, TokenType, TRUE } from "./tokenizer"
 import { 
   IdentifierImpl, 
   LetStmtImpl, 
@@ -16,7 +16,8 @@ import {
   BlockStatementImpl, 
   FunctionLiteralImpl,
   Identifier,
-  CallExpressionImpl
+  CallExpressionImpl,
+  StringLiteralImpl
 } from "./ast"
 import { LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL } from './parser_constants'
 
@@ -70,6 +71,7 @@ class ParserImpl implements Parser {
     this.registerPrefix(LPAREN, this.parseGroupedExpression.bind(this))
     this.registerPrefix(IF, this.parseIfExpression.bind(this))
     this.registerPrefix(FUNCTION, this.parseFunctionLiteral.bind(this))
+    this.registerPrefix(STRING, this.parseStringLiteral.bind(this))
 
     this.infixParseFns = new Map<string, InfixParseFn>()
     this.registerInfix(PLUS, this.parseInfixExpression.bind(this))
@@ -315,6 +317,10 @@ class ParserImpl implements Parser {
     return lit
   }
 
+  parseStringLiteral(): Expression {
+    return new StringLiteralImpl(this.currToken, this.currToken.literal)
+  }
+
   parseFunctionParameters(): Identifier[] {
     const identifiers: Identifier[] = []
 
@@ -420,7 +426,6 @@ class ParserImpl implements Parser {
   }
 
   noPrefixParseFnError(t: TokenType) {
-    console.trace()
     const msg = `no prefix parse function for ${t} found`
     this.errors.push(msg)
   }

@@ -1,6 +1,6 @@
-import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl, IdentifierImpl, LetStmt, Identifier, FunctionLiteral, FunctionLiteralImpl, CallExpressionImpl, CallExpression } from './ast'
+import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl, IdentifierImpl, LetStmt, Identifier, FunctionLiteral, FunctionLiteralImpl, CallExpressionImpl, CallExpression, StringLiteralImpl, StringLiteral } from './ast'
 import EnvironmentImpl, { Environment, newEnclosedEnvironment } from './environment'
-import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ, FunctionImpl, Function } from './object'
+import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ, FunctionImpl, Function, StringImpl } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
 const NULL = new NullImpl()
@@ -87,6 +87,9 @@ export function evaluate(node: Node | Expression | Statement | null, env: Enviro
       }
 
       return applyFunction(fn, args)
+
+    case node instanceof StringLiteralImpl:
+      return new StringImpl((node as StringLiteral).value)
   }
 
   return NULL

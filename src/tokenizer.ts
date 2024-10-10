@@ -33,6 +33,7 @@ export const LT = "<"as const;
 export const GT = ">"as const;
 export const EQ = "==" as const
 export const NOT_EQ = "!=" as const
+export const STRING = "STRING" as const
 
 const KEYWORDS = new Map<string, TokenType>([
   ["fn", FUNCTION],
@@ -158,6 +159,10 @@ class LexerImpl implements Lexer {
         tok.literal = "";
         tok.type = EOF;
         break;
+      case '"':
+        tok.type = STRING
+        tok.literal = this.readString()
+        break;
       default:
         if(isLetter(this.ch)) {
           tok.literal = this.readIdentifier()
@@ -194,6 +199,18 @@ class LexerImpl implements Lexer {
       this.readChar()
     }
     return this.input.slice(position, this.position)
+  }
+
+  readString = (): string => {
+    const pos = this.position + 1
+    while(true) {
+      this.readChar()
+      if(this.ch[0] === 34 || this.ch[0] === 48) {
+        break
+      }
+    }
+
+    return this.input.slice(pos, this.position)
   }
 
   skipWhitespace = (): void => {

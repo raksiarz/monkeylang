@@ -9,6 +9,7 @@ export const NULL_OBJ = 'NULL' as const
 export const RETURN_VALUE_OBJ = 'RETURN_VALUE' as const
 export const ERROR_OBJ = 'ERROR' as const
 export const FUNCTION_OBJ = 'FUNCTION' as const
+export const STRING_OBJ = 'STRING' as const
 
 export interface Object {
   type(): ObjectType
@@ -37,6 +38,10 @@ export interface Function extends Object {
   parameters: Identifier[]
   body: BlockStatement
   env: EnvironmentImpl
+}
+
+export interface String extends Object {
+  value: string
 }
 
 export class IntegerImpl implements Integer {
@@ -142,5 +147,21 @@ export class FunctionImpl implements Function {
     out += `fn (${params.join(', ')}) { \n${String(this.body)}\n}`
 
     return out
+  }
+}
+
+export class StringImpl implements String {
+  value: string
+
+  constructor(value: string) {
+    this.value = value
+  }
+
+  type(): ObjectType {
+    return STRING_OBJ
+  }
+
+  inspect(): string {
+    return this.value
   }
 }
