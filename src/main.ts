@@ -37,14 +37,6 @@ const getInput = function () {
       console.log(evaluated.inspect())
     }
 
-    // for (let i = 0; i < input.length; i++) {
-    //   const tok = lexer.nextToken()
-    //   tokens.push(tok)
-    //   // console.log('token -> ', tok);
-    //   if (tok.type === 'EOF') {
-    //     break
-    //   }
-    // }
     getInput()
   })
 }
