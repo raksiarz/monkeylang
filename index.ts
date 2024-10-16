@@ -15,12 +15,22 @@ export function getAST(input: string) {
       printParseErrors(parser.errors)
     }
 
-    const evaluated = evaluate(program, ENV)
-    if(!!evaluated) {
-      console.log(evaluated.inspect())
+    return program
+}
+
+export function getEvaluated(input: string) {
+    const lexer = new LexerImpl(input);
+    const parser = new ParserImpl(lexer)
+    const program = parser.parseProgram()
+    
+    if(parser.errors.length !== 0) {
+      printParseErrors(parser.errors)
     }
 
-    return program
+    const evaluated = evaluate(program, ENV)
+    if(!!evaluated) {
+      return evaluated.inspect()
+    }
 }
 
 function printParseErrors(errors: string[]) {
