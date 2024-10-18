@@ -1,10 +1,11 @@
 {
   "name": "monkeylang",
-  "version": "1.4.3",
+  "version": "1.4.6",
   "description": "",
   "main": "index.js",
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

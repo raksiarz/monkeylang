@@ -30,6 +30,7 @@ export function getEvaluated(input) {
     if(!!evaluated) {
       return evaluated.inspect()
     }
+    return ''
 }
 
 function printParseErrors(errors) {
