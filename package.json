@@ -1,13 +1,25 @@
 {
   "name": "monkeylang",
-  "version": "1.4.0",
+  "version": "1.4.3",
   "description": "",
   "main": "index.js",
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p .",
-    "start": "tsc -p . && node ./build/main.js"
+    "start": "tsc -p . && node ./build/main.js",
+    "bundle": "webpack"
   },
   "keywords": [],
-  "author": ""
+  "author": "",
+  "dependencies": {
+    "@babel/preset-typescript": "^7.25.7",
+    "babel-loader": "^9.2.1",
+    "webpack": "^5.95.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^5.1.4"
+  }
 }

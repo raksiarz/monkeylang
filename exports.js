@@ -2,11 +2,10 @@ import LexerImpl from "./src/tokenizer"
 import ParserImpl from "./src/parser"
 import { evaluate } from "./src/evaluator"
 import EnvironmentImpl from "./src/environment"
-import { Object } from "./src/object"
 
-const ENV = new EnvironmentImpl(new Map<string, Object>, null)
+const ENV = new EnvironmentImpl(new Map(), null)
 
-export function getAST(input: string) {
+export function getAST(input) {
     const lexer = new LexerImpl(input);
     const parser = new ParserImpl(lexer)
     const program = parser.parseProgram()
@@ -18,7 +17,7 @@ export function getAST(input: string) {
     return program
 }
 
-export function getEvaluated(input: string) {
+export function getEvaluated(input) {
     const lexer = new LexerImpl(input);
     const parser = new ParserImpl(lexer)
     const program = parser.parseProgram()
@@ -33,7 +32,7 @@ export function getEvaluated(input: string) {
     }
 }
 
-function printParseErrors(errors: string[]) {
+function printParseErrors(errors) {
   for(let i = 0; i < errors.length; i++) {
     console.log('errors: ', errors[i]);
   }
