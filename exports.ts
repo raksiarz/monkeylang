@@ -12,6 +12,7 @@ const ENV = new EnvironmentImpl(new Map(), null)
 
     if (parser.errors.length !== 0) {
       printParseErrors(parser.errors)
+      return parser.errors
     }
 
     return program
@@ -24,6 +25,7 @@ const ENV = new EnvironmentImpl(new Map(), null)
 
     if (parser.errors.length !== 0) {
       printParseErrors(parser.errors)
+      return parser.errors
     }
 
     const evaluated = evaluate(program, ENV)
