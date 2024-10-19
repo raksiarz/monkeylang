@@ -1,8 +1,7 @@
 {
   "name": "monkeylang",
-  "version": "1.4.6",
+  "version": "1.4.27",
   "description": "",
-  "main": "index.js",
   "files": [
     "index.js",
     "index.d.ts"
@@ -21,6 +20,7 @@
     "webpack": "^5.95.0"
   },
   "devDependencies": {
+    "terser-webpack-plugin": "^5.3.10",
     "webpack-cli": "^5.1.4"
   }
 }

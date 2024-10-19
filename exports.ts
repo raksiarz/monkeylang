@@ -5,36 +5,34 @@ import EnvironmentImpl from "./src/environment"
 
 const ENV = new EnvironmentImpl(new Map(), null)
 
-export function getAST(input) {
+  export function getAST(input: string) {
     const lexer = new LexerImpl(input);
     const parser = new ParserImpl(lexer)
     const program = parser.parseProgram()
-    
-    if(parser.errors.length !== 0) {
+
+    if (parser.errors.length !== 0) {
       printParseErrors(parser.errors)
     }
 
     return program
-}
+  }
 
-export function getEvaluated(input) {
+  export function getEvaluated(input: string) {
     const lexer = new LexerImpl(input);
     const parser = new ParserImpl(lexer)
     const program = parser.parseProgram()
-    
-    if(parser.errors.length !== 0) {
+
+    if (parser.errors.length !== 0) {
       printParseErrors(parser.errors)
     }
 
     const evaluated = evaluate(program, ENV)
-    if(!!evaluated) {
-      return evaluated.inspect()
-    }
-    return ''
-}
 
-function printParseErrors(errors) {
-  for(let i = 0; i < errors.length; i++) {
+    return !!evaluated ? evaluated.inspect() : null
+  }
+
+function printParseErrors(errors: string[]) {
+  for (let i = 0; i < errors.length; i++) {
     console.log('errors: ', errors[i]);
   }
 }
