@@ -1,6 +1,6 @@
 import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl, IdentifierImpl, LetStmt, Identifier, FunctionLiteral, FunctionLiteralImpl, CallExpressionImpl, CallExpression, StringLiteralImpl, StringLiteral } from './ast'
 import EnvironmentImpl, { Environment, newEnclosedEnvironment } from './environment'
-import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ, FunctionImpl, Function, StringImpl } from './object'
+import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ, FunctionImpl, Function, String, StringImpl, STRING_OBJ } from './object'
 import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
 
 const NULL = new NullImpl()
@@ -187,6 +187,9 @@ function evaluateInfixExpression(operator: string, left: Object, right: Object):
     case left.type() !== right.type(): 
       return newError('type mismatch:', left.type(), operator, right.type())
 
+    case left.type() === STRING_OBJ && right.type() === STRING_OBJ:
+      return evaluateStringInfixExpression(operator, left, right)
+
     default:
       return newError('unknown operator:', left.type(), operator, right.type())
   }
@@ -224,6 +227,17 @@ function evaluateInfixIntegerExpression(operator: string, left: Object, right: O
     default:
       return newError('unknown operator:', left.type(), operator, right.type())
   }
+}
+
+function evaluateStringInfixExpression(operator: string, left: Object, right: Object): Object {
+  const leftVal = (left as String).value
+  const rightVal = (right as String).value
+
+  if(operator === PLUS) {
+    return new StringImpl(leftVal + rightVal)
+  }
+
+  return newError('unknown operator: ', left.type(), operator, right.type())
 }
 
 function evaluateIfExpression(ie: IfExpression, env: EnvironmentImpl): Object {
