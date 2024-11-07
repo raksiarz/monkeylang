@@ -1,8 +1,8 @@
-import LexerImpl, { Token } from "./tokenizer"
+import LexerImpl  from "./tokenizer"
 import ParserImpl from "./parser"
 import { evaluate } from "./evaluator"
 import EnvironmentImpl from "./environment"
-import { Object } from "./object"
+import Object from "./object"
 
 declare function require(name: string): any
 
@@ -37,14 +37,6 @@ const getInput = function () {
       console.log(evaluated.inspect())
     }
 
-    // for (let i = 0; i < input.length; i++) {
-    //   const tok = lexer.nextToken()
-    //   tokens.push(tok)
-    //   // console.log('token -> ', tok);
-    //   if (tok.type === 'EOF') {
-    //     break
-    //   }
-    // }
     getInput()
   })
 }

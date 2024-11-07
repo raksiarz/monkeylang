@@ -1,4 +1,4 @@
-import { Object } from "./object"
+import Object from "./object"
 
 export interface Environment {
     store: Map<string, Object>
