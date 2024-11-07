@@ -1,7 +1,7 @@
 import Object, * as object from "./object";
 import * as evaluator from "./evaluator"
 
-function lenfun(...args: Object[]): Object {
+function len(...args: Object[]): Object {
     if(args.length !== 1) {
         return evaluator.newError(`wrong number of arguments, got ${args.length}, want 1`)
     }
@@ -14,5 +14,5 @@ function lenfun(...args: Object[]): Object {
 }
 
 export const builtins = new Map<string, object.BulitinImpl>([
-    ["len", new object.BulitinImpl(lenfun)]
+    ["len", new object.BulitinImpl(len)]
 ])
