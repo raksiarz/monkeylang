@@ -8,7 +8,7 @@ Monkey lang is simple langue implemented in TS following "Writing an interpreter
 - simple REPL
 
 ### Getting started
-To run the REPL first in command line run `npm run start`
+To start the REPL in command line run `npm run start`
 
 #### Still work in progress, for now generating tokens and building ast works fine, evaluator not so much 
 

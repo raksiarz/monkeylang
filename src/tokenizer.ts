@@ -1,4 +1,3 @@
-// Token  
 export type TokenType = string;
 
 export type Token = {

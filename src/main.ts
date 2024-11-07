@@ -1,8 +1,8 @@
-import LexerImpl, { Token } from "./tokenizer"
+import LexerImpl  from "./tokenizer"
 import ParserImpl from "./parser"
 import { evaluate } from "./evaluator"
 import EnvironmentImpl from "./environment"
-import { Object } from "./object"
+import Object from "./object"
 
 declare function require(name: string): any
 

@@ -1,5 +1,5 @@
 import { BlockStatement, Identifier } from "./ast"
-import EnvironmentImpl, { Environment } from "./environment"
+import EnvironmentImpl from "./environment"
 
 type ObjectType = string
 
@@ -11,7 +11,7 @@ export const ERROR_OBJ = 'ERROR' as const
 export const FUNCTION_OBJ = 'FUNCTION' as const
 export const STRING_OBJ = 'STRING' as const
 
-export interface Object {
+export default interface Object {
   type(): ObjectType
   inspect(): string
 }

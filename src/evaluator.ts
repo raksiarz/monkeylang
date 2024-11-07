@@ -1,25 +1,25 @@
-import { Node, Statement, Expression, IntegerLiteralImpl, ProgramImpl, ExpressionStmtImpl, ExpressionStmt, IfExpression, Program, IntegerLiteral, InfixExpressionImpl, InfixExpression, BooleanImpl, Boolean, PrefixExpressionImpl, PrefixExpression, BlockStatementImpl, BlockStatement, IfExpressionImpl, ReturnStmtImpl, ReturnStmt, LetStmtImpl, IdentifierImpl, LetStmt, Identifier, FunctionLiteral, FunctionLiteralImpl, CallExpressionImpl, CallExpression, StringLiteralImpl, StringLiteral } from './ast'
-import EnvironmentImpl, { Environment, newEnclosedEnvironment } from './environment'
-import { Object, IntegerImpl, BoolImpl, NullImpl, Bool, INTEGER_OBJ, Integer, ReturnValueImpl, ReturnValue, RETURN_VALUE_OBJ, ErrorImpl, ERROR_OBJ, FunctionImpl, Function, StringImpl } from './object'
-import { ASTERISK, BANG, EQ, GT, LT, MINUS, NOT_EQ, PLUS, SLASH } from './tokenizer'
+import * as ast from './ast'
+import EnvironmentImpl, * as env from './environment'
+import Object, * as object from './object'
+import * as tokenizer from './tokenizer'
 
-const NULL = new NullImpl()
-const FALSE = new BoolImpl(false)
-const TRUE = new BoolImpl(true)
+const NULL = new object.NullImpl()
+const FALSE = new object.BoolImpl(false)
+const TRUE = new object.BoolImpl(true)
 
-export function evaluate(node: Node | Expression | Statement | null, env: EnvironmentImpl): Object {
+export function evaluate(node: ast.Node | ast.Expression | ast.Statement | null, env: EnvironmentImpl): Object {
   switch(true) {
-    case node instanceof ProgramImpl:
-      return evaluateProgram((node as Program).statements, env)
+    case node instanceof ast.ProgramImpl:
+      return evaluateProgram((node as ast.Program).statements, env)
 
-    case node instanceof ExpressionStmtImpl:
-      return evaluate((node as ExpressionStmt)?.expression, env)
+    case node instanceof ast.ExpressionStmtImpl:
+      return evaluate((node as ast.ExpressionStmt)?.expression, env)
 
-    case node instanceof IntegerLiteralImpl: 
-      return new IntegerImpl((node as IntegerLiteral).value)
+    case node instanceof ast.IntegerLiteralImpl: 
+      return new object.IntegerImpl((node as ast.IntegerLiteral).value)
 
-    case node instanceof InfixExpressionImpl:
-      const infixNode = node as InfixExpression
+    case node instanceof ast.InfixExpressionImpl:
+      const infixNode = node as ast.InfixExpression
       const left = evaluate(infixNode.left, env)
       if(isError(left)) {
         return left
@@ -32,11 +32,11 @@ export function evaluate(node: Node | Expression | Statement | null, env: Enviro
 
       return evaluateInfixExpression(infixNode.operator, left, right)
 
-    case node instanceof BooleanImpl:
-      return nativeBoolToBooleanObject((node as Boolean).value)
+    case node instanceof ast.BooleanImpl:
+      return nativeBoolToBooleanObject((node as ast.Boolean).value)
     
-    case node instanceof PrefixExpressionImpl:
-      const prefixNode = node as PrefixExpression
+    case node instanceof ast.PrefixExpressionImpl:
+      const prefixNode = node as ast.PrefixExpression
       const rightEval = evaluate(prefixNode.right, env)
       if(isError(rightEval)) {
         return rightEval
@@ -44,21 +44,21 @@ export function evaluate(node: Node | Expression | Statement | null, env: Enviro
 
       return evaluatePrefixExpression(prefixNode.operator, rightEval)
 
-    case node instanceof BlockStatementImpl:
-      return evaluateBlockStatement((node as BlockStatement), env)
+    case node instanceof ast.BlockStatementImpl:
+      return evaluateBlockStatement((node as ast.BlockStatement), env)
     
-    case node instanceof IfExpressionImpl:
-      return evaluateIfExpression(node as IfExpression, env)
+    case node instanceof ast.IfExpressionImpl:
+      return evaluateIfExpression(node as ast.IfExpression, env)
 
-    case node instanceof ReturnStmtImpl:
-      const val = evaluate((node as ReturnStmt).returnValue, env)  
+    case node instanceof ast.ReturnStmtImpl:
+      const val = evaluate((node as ast.ReturnStmt).returnValue, env)  
       if(isError(val)) {
         return val
       }
-      return new ReturnValueImpl(val)
+      return new object.ReturnValueImpl(val)
 
-    case node instanceof LetStmtImpl:
-      const letNode = node as LetStmt
+    case node instanceof ast.LetStmtImpl:
+      const letNode = node as ast.LetStmt
       const value = evaluate(letNode.value, env)
       if(isError(value)) {
         return value 
@@ -66,36 +66,36 @@ export function evaluate(node: Node | Expression | Statement | null, env: Enviro
       env.set(letNode.name.value, value)
       break;
 
-    case node instanceof IdentifierImpl:
-      return evalIdentifier(node as Identifier, env)
+    case node instanceof ast.IdentifierImpl:
+      return evalIdentifier(node as ast.Identifier, env)
 
-    case node instanceof FunctionLiteralImpl:
-      const funcNode = node as FunctionLiteral
+    case node instanceof ast.FunctionLiteralImpl:
+      const funcNode = node as ast.FunctionLiteral
       const params = funcNode.parameters
       const body = funcNode.body
 
-      return new FunctionImpl(params, body, env)
+      return new object.FunctionImpl(params, body, env)
     
-    case node instanceof CallExpressionImpl:
-      const fn = evaluate((node as CallExpression).fn, env)
+    case node instanceof ast.CallExpressionImpl:
+      const fn = evaluate((node as ast.CallExpression).fn, env)
       if(isError(fn)) {
         return fn
       }
-      const args = evaluateExpression((node as CallExpression).arguments, env)
+      const args = evaluateExpression((node as ast.CallExpression).arguments, env)
       if(args.length === 1 && isError(args[0])) {
         return args[0]
       }
 
       return applyFunction(fn, args)
 
-    case node instanceof StringLiteralImpl:
-      return new StringImpl((node as StringLiteral).value)
+    case node instanceof ast.StringLiteralImpl:
+      return new object.StringImpl((node as ast.StringLiteral).value)
   }
 
   return NULL
 }
 
-function nativeBoolToBooleanObject(input: boolean): Bool {
+function nativeBoolToBooleanObject(input: boolean): object.Bool {
   if(!!input) {
     return TRUE
   }
@@ -103,17 +103,17 @@ function nativeBoolToBooleanObject(input: boolean): Bool {
   return FALSE
 }
 
-function evaluateProgram(stmts: Statement[], env: EnvironmentImpl): Object {
+function evaluateProgram(stmts: ast.Statement[], env: EnvironmentImpl): Object {
   let result: Object = NULL
 
   for(let i = 0; i < stmts.length; i++) {
     result = evaluate(stmts[i], env)
 
     switch(true) {
-      case result.type() === RETURN_VALUE_OBJ:
-        return (result as ReturnValue).value
+      case result.type() === object.RETURN_VALUE_OBJ:
+        return (result as object.ReturnValue).value
 
-      case result.type() === ERROR_OBJ:
+      case result.type() === object.ERROR_OBJ:
         return result
     }
   }
@@ -121,7 +121,7 @@ function evaluateProgram(stmts: Statement[], env: EnvironmentImpl): Object {
   return result
 }
 
-function evaluateBlockStatement(block: BlockStatement, env: EnvironmentImpl): Object {
+function evaluateBlockStatement(block: ast.BlockStatement, env: EnvironmentImpl): Object {
   let result = <Object>{}
 
   for(let i = 0; i < block.statements.length; i++) {
@@ -130,7 +130,7 @@ function evaluateBlockStatement(block: BlockStatement, env: EnvironmentImpl): Ob
     if(result !== null) {
       const rt = result.type()
 
-      if (rt === RETURN_VALUE_OBJ || rt === ERROR_OBJ) {
+      if (rt === object.RETURN_VALUE_OBJ || rt === object.ERROR_OBJ) {
         return result
       }
     }
@@ -142,9 +142,9 @@ function evaluateBlockStatement(block: BlockStatement, env: EnvironmentImpl): Ob
 
 function evaluatePrefixExpression(operator: string, right: Object | null): Object {
   switch(operator) {
-    case BANG:
+    case tokenizer.BANG:
       return evaluateBangOperatorExpression(right)
-    case MINUS:
+    case tokenizer.MINUS:
       return evalueateMinusPrefixOperatorExpression(right)
     default:
       return newError('unknown operator:', operator, right?.type()) 
@@ -165,27 +165,30 @@ function evaluateBangOperatorExpression(right: Object | null): Object {
 }
 
 function evalueateMinusPrefixOperatorExpression(right: Object | null): Object {
-  if(right?.type() !== INTEGER_OBJ) {
+  if(right?.type() !== object.INTEGER_OBJ) {
     return NULL
   }
 
-  const value = (right as Integer).value
-  return new IntegerImpl(-value)
+  const value = (right as object.Integer).value
+  return new object.IntegerImpl(-value)
 }
 
 function evaluateInfixExpression(operator: string, left: Object, right: Object): Object {
   switch(true) {
-    case left.type() === INTEGER_OBJ && right.type() === INTEGER_OBJ:
+    case left.type() === object.INTEGER_OBJ && right.type() === object.INTEGER_OBJ:
       return evaluateInfixIntegerExpression(operator, left, right)
 
-    case operator == EQ:
-      return new BoolImpl(left == right)
+    case operator == tokenizer.EQ:
+      return new object.BoolImpl(left == right)
         
-    case operator == NOT_EQ:
-      return new BoolImpl(left != right)
+    case operator == tokenizer.NOT_EQ:
+      return new object.BoolImpl(left != right)
 
     case left.type() !== right.type(): 
       return newError('type mismatch:', left.type(), operator, right.type())
+
+    case left.type() === object.STRING_OBJ && right.type() === object.STRING_OBJ:
+      return evaluateStringInfixExpression(operator, left, right)
 
     default:
       return newError('unknown operator:', left.type(), operator, right.type())
@@ -193,40 +196,51 @@ function evaluateInfixExpression(operator: string, left: Object, right: Object):
 }
 
 function evaluateInfixIntegerExpression(operator: string, left: Object, right: Object): Object {
-  const leftVal = (left as Integer).value
-  const rightVal = (right as Integer).value
+  const leftVal = (left as object.Integer).value
+  const rightVal = (right as object.Integer).value
   
   switch(operator) {
-    case PLUS:
-      return new IntegerImpl(leftVal + rightVal)
+    case tokenizer.PLUS:
+      return new object.IntegerImpl(leftVal + rightVal)
 
-    case MINUS:
-      return new IntegerImpl(leftVal - rightVal)
+    case tokenizer.MINUS:
+      return new object.IntegerImpl(leftVal - rightVal)
 
-    case SLASH:
-      return new IntegerImpl(leftVal / rightVal)
+    case tokenizer.SLASH:
+      return new object.IntegerImpl(leftVal / rightVal)
 
-    case ASTERISK:
-      return new IntegerImpl(leftVal * rightVal)
+    case tokenizer.ASTERISK:
+      return new object.IntegerImpl(leftVal * rightVal)
 
-    case NOT_EQ:
-      return new BoolImpl(leftVal !== rightVal)
+    case tokenizer.NOT_EQ:
+      return new object.BoolImpl(leftVal !== rightVal)
 
-    case EQ:
-      return new BoolImpl(leftVal === rightVal)
+    case tokenizer.EQ:
+      return new object.BoolImpl(leftVal === rightVal)
 
-    case LT:
-      return new BoolImpl(leftVal < rightVal)
+    case tokenizer.LT:
+      return new object.BoolImpl(leftVal < rightVal)
 
-    case GT:
-      return new BoolImpl(leftVal > rightVal)
+    case tokenizer.GT:
+      return new object.BoolImpl(leftVal > rightVal)
 
     default:
       return newError('unknown operator:', left.type(), operator, right.type())
   }
 }
 
-function evaluateIfExpression(ie: IfExpression, env: EnvironmentImpl): Object {
+function evaluateStringInfixExpression(operator: string, left: Object, right: Object): Object {
+  const leftVal = (left as object.String).value
+  const rightVal = (right as object.String).value
+
+  if(operator === tokenizer.PLUS) {
+    return new object.StringImpl(leftVal + rightVal)
+  }
+
+  return newError('unknown operator: ', left.type(), operator, right.type())
+}
+
+function evaluateIfExpression(ie: ast.IfExpression, env: EnvironmentImpl): Object {
   const condition = evaluate(ie.condition, env)
   if(isError(condition)) {
     return condition
@@ -241,7 +255,7 @@ function evaluateIfExpression(ie: IfExpression, env: EnvironmentImpl): Object {
   }
 }
 
-function evalIdentifier(node: IdentifierImpl, env: EnvironmentImpl): Object {
+function evalIdentifier(node: ast.IdentifierImpl, env: EnvironmentImpl): Object {
   const val = env.get(node.value)
   if(!!val) {
     return val
@@ -250,7 +264,7 @@ function evalIdentifier(node: IdentifierImpl, env: EnvironmentImpl): Object {
   return newError("identifier not found " + node.value)
 }
 
-function evaluateExpression(exps: Expression[], env: EnvironmentImpl): Object[] {
+function evaluateExpression(exps: ast.Expression[], env: EnvironmentImpl): Object[] {
   const result: Object[] = []
 
   for(let i = 0; i < exps.length; i++) {
@@ -266,7 +280,7 @@ function evaluateExpression(exps: Expression[], env: EnvironmentImpl): Object[] 
 }
 
 function applyFunction(fn: Object, args: Object[]): Object {
-  const func = fn as Function
+  const func = fn as object.Function
   if(!func) {
     return newError('not a function ' + fn.type())
   }
@@ -277,18 +291,18 @@ function applyFunction(fn: Object, args: Object[]): Object {
   return unwrapReturnValue(evaluated)
 }
 
-function extendFunctionEnv(fn: Function, args: Object[]): EnvironmentImpl {
-  const env = newEnclosedEnvironment(fn.env)
+function extendFunctionEnv(fn: object.Function, args: Object[]): EnvironmentImpl {
+  const e = env.newEnclosedEnvironment(fn.env)
 
   for(let i = 0; i < fn.parameters.length; i++) {
-    env.set(fn.parameters[i].value, args[i])
+    e.set(fn.parameters[i].value, args[i])
   }
   
-  return env
+  return e
 }
 
 function unwrapReturnValue(obj: Object): Object {
-  const returnValue = obj as ReturnValue
+  const returnValue = obj as object.ReturnValue
   if(!!returnValue) {
     return returnValue
   }
@@ -312,17 +326,17 @@ function isTruthy(obj: Object): boolean {
   }
 }
 
-function newError(format: string, ...args: any[]): ErrorImpl {
+function newError(format: string, ...args: any[]): object.ErrorImpl {
   let msg = ''
   for(let i = 0; i < args.length; i++) {
     msg += ' ' + args[i]
   }
-  return new ErrorImpl(format + msg)
+  return new object.ErrorImpl(format + msg)
 }
 
 function isError(obj: Object): boolean {
   if(obj !== null) {
-    return obj.type() === ERROR_OBJ
+    return obj.type() === object.ERROR_OBJ
   }
 
   return false
