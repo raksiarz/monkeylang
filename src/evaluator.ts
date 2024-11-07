@@ -2,6 +2,7 @@ import * as ast from './ast'
 import EnvironmentImpl, * as env from './environment'
 import Object, * as object from './object'
 import * as tokenizer from './tokenizer'
+import * as builtins from './bultins'
 
 const NULL = new object.NullImpl()
 const FALSE = new object.BoolImpl(false)
@@ -261,6 +262,11 @@ function evalIdentifier(node: ast.IdentifierImpl, env: EnvironmentImpl): Object 
     return val
   }
 
+  const bultin = builtins.builtins.get(node.value)
+  if(bultin) {
+    return bultin
+  }
+
   return newError("identifier not found " + node.value)
 }
 
@@ -281,14 +287,20 @@ function evaluateExpression(exps: ast.Expression[], env: EnvironmentImpl): Objec
 
 function applyFunction(fn: Object, args: Object[]): Object {
   const func = fn as object.Function
-  if(!func) {
-    return newError('not a function ' + fn.type())
+
+  switch (func.type()) {
+    case object.FUNCTION_OBJ:
+      const extendedEnv = extendFunctionEnv(func, args)
+      const evaluated = evaluate(func.body, extendedEnv)
+
+      return unwrapReturnValue(evaluated)
+
+    case object.BUILTIN_OBJ:
+      return (fn as object.BulitinImpl).fn(...args)
+
+    default:
+      return newError('not a function ' + fn.type())
   }
-
-  const extendedEnv = extendFunctionEnv(func, args)
-  const evaluated = evaluate(func.body, extendedEnv)
-
-  return unwrapReturnValue(evaluated)
 }
 
 function extendFunctionEnv(fn: object.Function, args: Object[]): EnvironmentImpl {
@@ -326,7 +338,7 @@ function isTruthy(obj: Object): boolean {
   }
 }
 
-function newError(format: string, ...args: any[]): object.ErrorImpl {
+export function newError(format: string, ...args: any[]): object.ErrorImpl {
   let msg = ''
   for(let i = 0; i < args.length; i++) {
     msg += ' ' + args[i]

@@ -10,6 +10,7 @@ export const RETURN_VALUE_OBJ = 'RETURN_VALUE' as const
 export const ERROR_OBJ = 'ERROR' as const
 export const FUNCTION_OBJ = 'FUNCTION' as const
 export const STRING_OBJ = 'STRING' as const
+export const BUILTIN_OBJ = 'BUILTIN' as const
 
 export default interface Object {
   type(): ObjectType
@@ -42,6 +43,12 @@ export interface Function extends Object {
 
 export interface String extends Object {
   value: string
+}
+
+type BuiltinFunction = (...args: Object[]) => Object
+
+export interface Builtin extends Object {
+  fn: BuiltinFunction
 }
 
 export class IntegerImpl implements Integer {
@@ -163,5 +170,21 @@ export class StringImpl implements String {
 
   inspect(): string {
     return this.value
+  }
+}
+
+export class BulitinImpl implements Builtin {
+  fn: BuiltinFunction
+  
+  constructor(fn: BuiltinFunction) {
+    this.fn = fn
+  }
+
+  type(): ObjectType {
+    return BUILTIN_OBJ
+  }
+
+  inspect(): string {
+    return 'builtin function'
   }
 }
